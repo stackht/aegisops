@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 
 import OverviewPage from './pages/OverviewPage';
+import { subscribeTelemetry } from './demo/engine';
 import InfrastructurePage from './pages/InfrastructurePage';
 import AIMonitoringPage from './pages/AIMonitoringPage';
 import IncidentCenterPage from './pages/IncidentCenterPage';
@@ -33,33 +34,10 @@ export default function App() {
       .then(d => setSlmOnline(d.ollama === 'online' || d.ollama === 'ready'))
       .catch(() => setSlmOnline(true));
 
-    // Connect WebSocket Telemetry Stream
-    let ws = null;
-    try {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.hostname}:8000/ws/monitoring`;
-      ws = new WebSocket(wsUrl);
-
-      ws.onopen = () => setWsConnected(true);
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.type === 'telemetry.update') {
-            setTelemetry(data);
-          }
-        } catch (err) {
-          console.error(err);
-        }
-      };
-      ws.onclose = () => setWsConnected(false);
-      ws.onerror = () => setWsConnected(false);
-    } catch (err) {
-      setWsConnected(false);
-    }
-
-    return () => {
-      if (ws) ws.close();
-    };
+    // Subscribe to the in-browser telemetry stream (static demo: no server)
+    setWsConnected(true);
+    const unsubscribe = subscribeTelemetry((data) => setTelemetry(data));
+    return () => unsubscribe();
   }, [refreshTrigger]);
 
   const navItems = [
@@ -110,7 +88,7 @@ export default function App() {
             </span>
             <span className={`px-2 py-0.5 rounded border ${wsConnected ? 'bg-emerald-950 text-emerald-400 border-emerald-500/30 font-semibold flex items-center gap-1' : 'bg-slate-900 text-slate-400 border-white/10'}`}>
               {wsConnected && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />}
-              WS: {wsConnected ? 'LIVE' : 'POLL'}
+              STREAM: {wsConnected ? 'LIVE' : 'OFF'}
             </span>
           </div>
         </div>

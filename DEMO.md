@@ -1,13 +1,13 @@
 # AegisOps Demo Walkthrough
 
-AegisOps is a demo build: telemetry, Kubernetes and the language model are simulated. Start the backend and the
-dashboard (see README), open http://localhost:3000 and follow the steps.
+AegisOps is a demo build: telemetry, Kubernetes and the language model are simulated. Run the dashboard (see README: npm run dev in frontend, no backend needed), open
+http://localhost:3000 and follow the steps.
 
 ```text
 STEP 1  Baseline
         Overview: 5 services HEALTHY, 0 incidents, anomaly score 0.00 (LOW), failure risk a few percent.
 STEP 2  Inject a failure
-        Simulation Controls > "CPU Saturation (95%)" > Inject Scenario (or: python scripts/simulate_cpu.py).
+        Simulation Controls > "CPU Saturation (95%)" > Inject Scenario .
         An incident is opened and the service turns CRITICAL.
 STEP 3  Detection
         Overview tiles and the AI Intelligence page show the live model outputs for the worst service:
