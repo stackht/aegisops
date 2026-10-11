@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: aiops-postgres
+    environment:
+      POSTGRES_USER: aiops_user
+      POSTGRES_PASSWORD: aiops_password
+      POSTGRES_DB: aiops_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aiops_user -d aiops_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: aiops-redis
+    ports:
+      - "6379:6379"
+
+  prometheus:
+    image: prom/prometheus:v2.49.1
+    container_name: aiops-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: aiops-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aiops-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://aiops_user:aiops_password@postgres:5432/aiops_db
+      - REDIS_URL=redis://redis:6379/0
+      - PROMETHEUS_URL=http://prometheus:9090
+      - OLLAMA_URL=http://ollama:11434
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+volumes:
+  postgres_data:
+  ollama_data:
